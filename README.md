@@ -17,6 +17,25 @@ The project is being built in stages:
 
 The current repository implements stage 1 completely.
 
+## Start here
+
+The main simulation path is:
+
+```text
+run baseline -> build surface-code circuit -> apply IID noise
+             -> Stim detector events -> MWPM decoder -> logical error rate
+```
+
+Run the tests first, then run the baseline:
+
+```bash
+PYTHONPATH=. pytest -q
+MPLCONFIGDIR=/tmp/qc-matplotlib PYTHONPATH=. python experiments/baseline_mwpm.py --shots 1000
+```
+
+The larger default run uses 10,000 shots per point. Results are generated in
+`results/` and are intentionally ignored by Git.
+
 ## Quick start
 
 Requirements: Python 3.11 or newer and a terminal.
@@ -144,7 +163,12 @@ surface_code.py ----> iid_noise.py
 | `src/noise/iid_noise.py` | Defines the independent physical-noise parameters. |
 | `src/decoders/mwpm.py` | Builds a PyMatching decoder from Stim's detector error model. |
 | `experiments/baseline_mwpm.py` | Runs the parameter sweep, samples shots, scores logical failures, and saves results. |
-| `tests/test_mwpm_setup.py` | Checks the original circuit-to-decoder setup. |
+| `experiments/individual_noise_baseline.py` | Compares gate, measurement, reset, and combined IID noise. |
+| `experiments/compare_literature_timescales.py` | Demonstrates why IID noise cannot reproduce physical memory times. |
+| `experiments/willow_reference_check.py` | Prints Willow reference timescales and samples persistent leakage states. |
+| `src/noise/willow_model.py` | Stores source-backed Willow reference parameters and timescale formulas. |
+| `docs/noise_literature_database.md` | Literature database with mechanisms, timescales, and citations. |
+| `tests/test_mwpm_setup.py` | Verifies that the surface-code circuit creates an MWPM decoder. |
 | `tests/test_iid_baseline.py` | Checks validation, zero-noise behavior, and sweep output. |
 | `requirements.txt` | Lists all Python libraries required to run the project. |
 | `docs/surface_code_diagram.svg` | Conceptual picture of data qubits and X/Z stabilizer checks. |
@@ -155,13 +179,53 @@ The x-axis is physical error probability `p`; the y-axis is logical error rate. 
 
 Zero observed failures are displayed at a small plotting floor because zero cannot be shown on a logarithmic y-axis. The CSV retains the true value `0.0`.
 
+## Literature-timescale comparison
+
+The separate script `experiments/compare_literature_timescales.py` checks what the current independent-noise model can and cannot reproduce. It estimates the lag-1 autocorrelation of an IID error stream and runs a controlled exponential-fit check for reported exponential timescales. The reported literature value is used as a synthetic test parameter, so a successful fit validates the analysis code, not the hardware measurement. The script correctly marks T1, T2, leakage, 1/f, drift, crosstalk, and burst times as not reproduced by an IID stream.
+
+```bash
+PYTHONPATH=. python experiments/compare_literature_timescales.py
+```
+
+The report is written to `results/literature_timescale_check.csv`. A physical comparison requires time-ordered experimental data or an explicitly correlated noise model; it cannot be obtained from IID sampling alone.
+
+## Willow reference calibration
+
+The first evidence-based realism layer uses measurements from Google's Willow
+surface-code experiment. Run it with:
+
+```bash
+PYTHONPATH=. python experiments/willow_reference_check.py --injection-probability 0.01
+```
+
+The check includes the reported mean `T1 = 68 us`, `T2,CPMG = 89 us`, QEC-cycle
+time `1.1 us`, leakage lifetime `4.4 cycles`, and bulk detection-event rates
+for `d = 3, 5, 7`. It derives only quantities that follow directly from those
+measurements. The leakage injection probability is a user input because the
+paper reports the leakage lifetime, not a universal injection rate.
+
+This is intentionally a calibration/reference check, not a claim that the
+current IID Stim circuit reproduces Willow's operation-specific error budget.
+The next upgrade is to add measured one-qubit, two-qubit, measurement, reset,
+and leakage-injection rates as separate inputs.
+
+## Individual implemented-noise results
+
+To measure the effect of each noise component separately, run:
+
+```bash
+MPLCONFIGDIR=/tmp/qc-matplotlib PYTHONPATH=. python experiments/individual_noise_baseline.py
+```
+
+This compares `gate_only`, `measurement_only`, `reset_only`, and `combined` noise for distances `d = 3, 5, 7`. Results are saved to `results/individual_noise_baseline.csv`. These are the only independent components currently implemented in the Stim circuit. Leakage, T1/T2, crosstalk, 1/f noise, calibration drift, and high-energy bursts are documented but are not yet simulated by the baseline.
+
 ## Reproducibility notes
 
 The experiment uses Monte Carlo sampling, so nonzero results vary slightly between runs unless a simulator seed is added. More shots give more precise estimates. For an estimated logical error rate `L` from `N` shots, the statistical uncertainty is approximately `sqrt(L(1-L)/N)`.
 
 ## Planned OU-noise extension
 
-The next module will be `src/noise/ou_noise.py`. It will generate a temporally correlated process using Euler-Maruyama discretization with target autocorrelation
+The next research module will be `src/noise/ou_noise.py`. It will generate a temporally correlated process using Euler-Maruyama discretization with target autocorrelation
 
 ```text
 C(delta_t) = exp(-delta_t / tau_c)

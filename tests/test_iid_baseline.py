@@ -12,6 +12,11 @@ def test_iid_noise_rejects_invalid_probability():
         get_iid_noise(1.1)
 
 
+def test_iid_noise_can_select_one_component():
+    noise = get_iid_noise(0.1, components=("before_measure_flip_probability",))
+    assert noise == {"before_measure_flip_probability": 0.1}
+
+
 def test_surface_code_rejects_invalid_parameters():
     with pytest.raises(ValueError):
         create_surface_code(4, 4)

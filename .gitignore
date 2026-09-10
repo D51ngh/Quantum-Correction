@@ -4,3 +4,5 @@ results/*.png
 __pycache__/
 *.pyc
 .DS_Store
+.pytest_cache/
+tmp/
