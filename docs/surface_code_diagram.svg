@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
+  <rect width="1000" height="620" fill="#f8fafc"/>
+  <text x="500" y="42" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold" fill="#17324d">Conceptual rotated surface-code layout</text>
+  <text x="500" y="74" text-anchor="middle" font-family="Arial" font-size="16" fill="#486581">Data qubits are checked by local X- and Z-type stabilizers</text>
+  <g stroke="#bcccdc" stroke-width="3">
+    <path d="M220 150 H780 M220 250 H780 M220 350 H780 M220 450 H780"/>
+    <path d="M260 110 V490 M380 110 V490 M500 110 V490 M620 110 V490 M740 110 V490"/>
+  </g>
+  <g fill="#17324d" stroke="#fff" stroke-width="4">
+    <circle cx="260" cy="150" r="17"/><circle cx="380" cy="150" r="17"/><circle cx="500" cy="150" r="17"/><circle cx="620" cy="150" r="17"/><circle cx="740" cy="150" r="17"/>
+    <circle cx="260" cy="250" r="17"/><circle cx="380" cy="250" r="17"/><circle cx="500" cy="250" r="17"/><circle cx="620" cy="250" r="17"/><circle cx="740" cy="250" r="17"/>
+    <circle cx="260" cy="350" r="17"/><circle cx="380" cy="350" r="17"/><circle cx="500" cy="350" r="17"/><circle cx="620" cy="350" r="17"/><circle cx="740" cy="350" r="17"/>
+    <circle cx="260" cy="450" r="17"/><circle cx="380" cy="450" r="17"/><circle cx="500" cy="450" r="17"/><circle cx="620" cy="450" r="17"/><circle cx="740" cy="450" r="17"/>
+  </g>
+  <g font-family="Arial" font-size="17" font-weight="bold" text-anchor="middle">
+    <rect x="292" y="182" width="96" height="56" rx="10" fill="#bee3f8" stroke="#2b6cb0" stroke-width="3"/><text x="340" y="217" fill="#1a365d">Z check</text>
+    <rect x="412" y="282" width="96" height="56" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="3"/><text x="460" y="317" fill="#22543d">X check</text>
+    <rect x="532" y="382" width="96" height="56" rx="10" fill="#bee3f8" stroke="#2b6cb0" stroke-width="3"/><text x="580" y="417" fill="#1a365d">Z check</text>
+  </g>
+  <g stroke-width="5" fill="none" opacity=".9">
+    <path d="M260 150 L380 250 L500 350 L620 450" stroke="#dd6b20" stroke-dasharray="10 8"/>
+  </g>
+  <circle cx="380" cy="250" r="26" fill="none" stroke="#dd6b20" stroke-width="5"/>
+  <circle cx="620" cy="450" r="26" fill="none" stroke="#dd6b20" stroke-width="5"/>
+  <text x="80" y="535" font-family="Arial" font-size="16" fill="#486581">Dark dots = data qubits</text>
+  <text x="80" y="562" font-family="Arial" font-size="16" fill="#486581">Colored squares = local stabilizer measurements</text>
+  <text x="560" y="535" font-family="Arial" font-size="16" fill="#c05621">Dashed chain = possible error path</text>
+  <text x="560" y="562" font-family="Arial" font-size="16" fill="#c05621">Rings = syndrome endpoints detected by checks</text>
+</svg>
