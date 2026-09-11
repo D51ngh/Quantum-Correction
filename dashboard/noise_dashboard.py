@@ -10,9 +10,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-import pymatching
 import streamlit as st
-import stim
 
 ROOT = Path(__file__).resolve().parents[1]
 DATABASE = ROOT / "docs" / "noise_literature_database.md"
@@ -20,6 +18,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.noise.willow_model import WillowParameters
+from src.circuits.surface_code import create_surface_code
+from src.decoders.mwpm import create_mwpm_decoder
 
 
 def load_literature_records():
@@ -45,17 +45,16 @@ def load_literature_records():
 
 
 def run_simulation(distance, rounds, shots, gate_rate, measurement_rate, reset_rate):
-    circuit = stim.Circuit.generated(
-        "surface_code:rotated_memory_z",
+    circuit = create_surface_code(
         distance=distance,
         rounds=rounds,
-        after_clifford_depolarization=gate_rate,
-        before_measure_flip_probability=measurement_rate,
-        after_reset_flip_probability=reset_rate,
+        noise_rates={
+            "gate": gate_rate,
+            "measurement": measurement_rate,
+            "reset": reset_rate,
+        },
     )
-    decoder = pymatching.Matching.from_detector_error_model(
-        circuit.detector_error_model(decompose_errors=True)
-    )
+    decoder = create_mwpm_decoder(circuit)
     detectors, observables = circuit.compile_detector_sampler().sample(
         shots=shots, separate_observables=True
     )
@@ -68,6 +67,9 @@ def run_simulation(distance, rounds, shots, gate_rate, measurement_rate, reset_r
         "logical_failures": failures,
         "logical_error_rate": failures / shots,
         "detector_event_rate": float(detectors.mean()),
+        "gate_error_rate": gate_rate,
+        "measurement_error_rate": measurement_rate,
+        "reset_error_rate": reset_rate,
     }
 
 
@@ -77,26 +79,34 @@ st.caption("Adjust active IID noise channels, run Stim + MWPM, and inspect liter
 
 with st.sidebar:
     st.header("Simulation controls")
-    distance = st.selectbox("Code distance", [3, 5, 7], index=0)
-    rounds = st.number_input("QEC rounds", min_value=1, max_value=100, value=int(distance), step=1)
-    shots = st.number_input("Monte Carlo shots", min_value=10, max_value=100_000, value=1_000, step=100)
-    st.subheader("Active IID noise rates")
-    gate_rate = st.number_input("Gate error rate", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
-    measurement_rate = st.number_input("Measurement error rate", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
-    reset_rate = st.number_input("Reset error rate", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
-    run = st.button("Run simulation", type="primary")
+    with st.form("circuit_controls"):
+        distance = st.selectbox("Code distance", [3, 5, 7], index=0)
+        rounds = st.number_input("QEC rounds", min_value=1, max_value=100, value=3, step=1)
+        shots = st.number_input("Monte Carlo shots", min_value=10, max_value=100_000, value=1_000, step=100)
+        st.subheader("Active IID noise rates")
+        gate_rate = st.number_input("Gate error probability", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
+        measurement_rate = st.number_input("Measurement error probability", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
+        reset_rate = st.number_input("Reset error probability", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
+        run = st.form_submit_button("▶ Play: run circuit", type="primary", use_container_width=True)
 
 if run:
     with st.spinner("Running Stim and MWPM..."):
         result = run_simulation(distance, int(rounds), int(shots), gate_rate, measurement_rate, reset_rate)
     st.session_state["last_result"] = result
+    history = st.session_state.setdefault("history", [])
+    history.append(result)
 
 result = st.session_state.get("last_result")
 if result:
     st.subheader("Simulation result")
-    metrics = pd.DataFrame([result])
-    st.dataframe(metrics, use_container_width=True, hide_index=True)
-    st.bar_chart(metrics.set_index("distance")[["logical_error_rate", "detector_event_rate"]])
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Logical-error rate", f"{result['logical_error_rate']:.6g}")
+    col2.metric("Logical failures", result["logical_failures"])
+    col3.metric("Detector-event rate", f"{result['detector_event_rate']:.6g}")
+    st.dataframe(pd.DataFrame([result]), use_container_width=True, hide_index=True)
+    history = pd.DataFrame(st.session_state.get("history", []))
+    st.subheader("Run history")
+    st.line_chart(history.set_index(history.index)[["logical_error_rate", "detector_event_rate"]])
 else:
     st.info("Choose the noise rates and press **Run simulation**.")
 
