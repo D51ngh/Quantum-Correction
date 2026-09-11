@@ -169,6 +169,7 @@ surface_code.py ----> iid_noise.py
 | `src/noise/willow_model.py` | Stores source-backed Willow reference parameters and timescale formulas. |
 | `docs/noise_literature_database.md` | Editable literature database with mechanisms, timescales, and citations. |
 | `output/pdf/noise_literature_database.pdf` | Readable PDF version of the complete literature database. |
+| `docs/QEC_Guide.pdf` | Supplemental seven-page QEC guide. |
 | `tests/test_mwpm_setup.py` | Verifies that the surface-code circuit creates an MWPM decoder. |
 | `tests/test_iid_baseline.py` | Checks validation, zero-noise behavior, and sweep output. |
 | `requirements.txt` | Lists all Python libraries required to run the project. |
