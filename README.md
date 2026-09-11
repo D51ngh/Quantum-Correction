@@ -72,7 +72,8 @@ streamlit run dashboard/noise_dashboard.py
 
 The sidebar controls gate, measurement, and reset IID rates, code distance,
 QEC rounds, and Monte Carlo shots. The dashboard runs the actual Stim + MWPM
-pipeline and displays the logical-error rate. A separate literature panel
+pipeline and immediately displays a result graph, run history, and a
+plain-language explanation. A separate literature panel
 loads the documented mechanism records. Willow timescales and mechanisms that
 are not yet implemented as Stim channels are shown as references, not silently
 treated as simulated hardware noise.

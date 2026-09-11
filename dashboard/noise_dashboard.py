@@ -73,6 +73,30 @@ def run_simulation(distance, rounds, shots, gate_rate, measurement_rate, reset_r
     }
 
 
+def explain_result(result):
+    """Return a short plain-language interpretation of one run."""
+    highest_physical_rate = max(
+        result["gate_error_rate"],
+        result["measurement_error_rate"],
+        result["reset_error_rate"],
+    )
+    logical_rate = result["logical_error_rate"]
+    if logical_rate == 0:
+        return (
+            f"MWPM corrected every one of the {result['shots']:,} simulated shots. "
+            "This means no logical failure was observed in this sample; it does not prove the true rate is exactly zero."
+        )
+    if logical_rate < highest_physical_rate:
+        return (
+            f"MWPM left {result['logical_failures']} logical failures out of {result['shots']:,} shots. "
+            "The encoded logical error rate is below the largest selected physical noise rate, so the code improved reliability in this run."
+        )
+    return (
+        f"MWPM left {result['logical_failures']} logical failures out of {result['shots']:,} shots. "
+        "The selected noise is high enough that the logical rate is not below the largest physical noise rate; try a lower rate or larger distance."
+    )
+
+
 st.set_page_config(page_title="Quantum-Correction dashboard", layout="wide")
 st.title("Quantum-Correction dashboard")
 st.caption("Adjust active IID noise channels, run Stim + MWPM, and inspect literature reference values.")
@@ -104,6 +128,26 @@ if result:
     col2.metric("Logical failures", result["logical_failures"])
     col3.metric("Detector-event rate", f"{result['detector_event_rate']:.6g}")
     st.dataframe(pd.DataFrame([result]), use_container_width=True, hide_index=True)
+    st.info(explain_result(result))
+
+    st.subheader("What the selected noise is doing")
+    noise_plot = pd.DataFrame(
+        {
+            "Noise channel": ["Gate", "Measurement", "Reset", "Logical result"],
+            "Probability": [
+                result["gate_error_rate"],
+                result["measurement_error_rate"],
+                result["reset_error_rate"],
+                result["logical_error_rate"],
+            ],
+        }
+    ).set_index("Noise channel")
+    st.bar_chart(noise_plot)
+    st.caption(
+        "The first three bars are input physical-error probabilities. "
+        "The last bar is the measured logical-error rate after Stim and MWPM."
+    )
+
     history = pd.DataFrame(st.session_state.get("history", []))
     st.subheader("Run history")
     st.line_chart(history.set_index(history.index)[["logical_error_rate", "detector_event_rate"]])
