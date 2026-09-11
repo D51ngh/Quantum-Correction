@@ -76,7 +76,7 @@ def save_plot(results, path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--shots", type=int, default=10_000)
-    parser.add_argument("--output-dir", type=Path, default=Path("results"))
+    parser.add_argument("--output-dir", type=Path, default=Path("output/results"))
     args = parser.parse_args()
     results = run_baseline(shots=args.shots)
     save_csv(results, args.output_dir / "iid_baseline.csv")

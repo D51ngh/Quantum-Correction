@@ -34,7 +34,7 @@ MPLCONFIGDIR=/tmp/qc-matplotlib PYTHONPATH=. python experiments/baseline_mwpm.py
 ```
 
 The larger default run uses 10,000 shots per point. Results are generated in
-`results/` and are intentionally ignored by Git.
+`output/results/` and are intentionally ignored by Git.
 
 ## Quick start
 
@@ -64,8 +64,8 @@ MPLCONFIGDIR=/tmp/qc-matplotlib PYTHONPATH=. python experiments/baseline_mwpm.py
 
 The experiment tests distances `d = 3, 5, 7`, five physical error probabilities, and 10,000 Monte Carlo shots per point. It creates:
 
-- `results/iid_baseline.csv`: numerical results.
-- `results/iid_baseline.png`: logical-error-rate plot.
+- `output/results/iid_baseline.csv`: numerical results.
+- `output/results/iid_baseline.png`: logical-error-rate plot.
 
 To run a faster smoke test:
 
@@ -189,7 +189,7 @@ The separate script `experiments/compare_literature_timescales.py` checks what t
 PYTHONPATH=. python experiments/compare_literature_timescales.py
 ```
 
-The report is written to `results/literature_timescale_check.csv`. A physical comparison requires time-ordered experimental data or an explicitly correlated noise model; it cannot be obtained from IID sampling alone.
+The report is written to `output/results/literature_timescale_check.csv`. A physical comparison requires time-ordered experimental data or an explicitly correlated noise model; it cannot be obtained from IID sampling alone.
 
 ## Willow reference calibration
 
@@ -219,7 +219,7 @@ To measure the effect of each noise component separately, run:
 MPLCONFIGDIR=/tmp/qc-matplotlib PYTHONPATH=. python experiments/individual_noise_baseline.py
 ```
 
-This compares `gate_only`, `measurement_only`, `reset_only`, and `combined` noise for distances `d = 3, 5, 7`. Results are saved to `results/individual_noise_baseline.csv`. These are the only independent components currently implemented in the Stim circuit. Leakage, T1/T2, crosstalk, 1/f noise, calibration drift, and high-energy bursts are documented but are not yet simulated by the baseline.
+This compares `gate_only`, `measurement_only`, `reset_only`, and `combined` noise for distances `d = 3, 5, 7`. Results are saved to `output/results/individual_noise_baseline.csv`. These are the only independent components currently implemented in the Stim circuit. Leakage, T1/T2, crosstalk, 1/f noise, calibration drift, and high-energy bursts are documented but are not yet simulated by the baseline.
 
 ## Reproducibility notes
 

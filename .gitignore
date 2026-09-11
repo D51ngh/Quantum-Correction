@@ -1,6 +1,6 @@
 
-results/*.csv
-results/*.png
+output/results/*.csv
+output/results/*.png
 __pycache__/
 *.pyc
 .DS_Store

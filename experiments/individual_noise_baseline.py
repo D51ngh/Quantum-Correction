@@ -74,7 +74,7 @@ def save_csv(rows, path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shots", type=int, default=10_000)
-    parser.add_argument("--output", type=Path, default=Path("results/individual_noise_baseline.csv"))
+    parser.add_argument("--output", type=Path, default=Path("output/results/individual_noise_baseline.csv"))
     args = parser.parse_args()
     rows = run_experiment(shots=args.shots)
     save_csv(rows, args.output)

@@ -126,7 +126,7 @@ def main():
     parser.add_argument("--probability", type=float, default=0.001)
     parser.add_argument("--samples", type=int, default=100_000)
     parser.add_argument("--seed", type=int, default=12345)
-    parser.add_argument("--output", type=Path, default=Path("results/literature_timescale_check.csv"))
+    parser.add_argument("--output", type=Path, default=Path("output/results/literature_timescale_check.csv"))
     args = parser.parse_args()
     if not 0 <= args.probability <= 1:
         raise ValueError("--probability must be between 0 and 1")
