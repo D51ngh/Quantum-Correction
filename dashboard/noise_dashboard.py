@@ -22,6 +22,7 @@ from src.circuits.surface_code import create_surface_code
 from src.decoders.mwpm import create_mwpm_decoder
 
 
+@st.cache_data
 def load_literature_records():
     """Read the ten-row main mechanism table from the Markdown database."""
     lines = DATABASE.read_text().splitlines()
@@ -73,6 +74,21 @@ def run_simulation(distance, rounds, shots, gate_rate, measurement_rate, reset_r
     }
 
 
+def run_distance_sweep(shots, gate_rate, measurement_rate, reset_rate):
+    """Run the baseline at d=3, 5, and 7 using rounds equal to distance."""
+    return [
+        run_simulation(
+            distance=distance,
+            rounds=distance,
+            shots=shots,
+            gate_rate=gate_rate,
+            measurement_rate=measurement_rate,
+            reset_rate=reset_rate,
+        )
+        for distance in (3, 5, 7)
+    ]
+
+
 def explain_result(result):
     """Return a short plain-language interpretation of one run."""
     highest_physical_rate = max(
@@ -105,13 +121,22 @@ with st.sidebar:
     st.header("Simulation controls")
     with st.form("circuit_controls"):
         distance = st.selectbox("Code distance", [3, 5, 7], index=0)
-        rounds = st.number_input("QEC rounds", min_value=1, max_value=100, value=3, step=1)
+        rounds = st.number_input(
+            "QEC rounds", min_value=1, max_value=100, value=3, step=1,
+            help="For the standard baseline, use rounds equal to the code distance.",
+        )
         shots = st.number_input("Monte Carlo shots", min_value=10, max_value=100_000, value=1_000, step=100)
         st.subheader("Active IID noise rates")
         gate_rate = st.number_input("Gate error probability", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
         measurement_rate = st.number_input("Measurement error probability", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
         reset_rate = st.number_input("Reset error probability", 0.0, 0.1, 0.001, 0.0001, format="%.4f")
         run = st.form_submit_button("▶ Play: run circuit", type="primary", use_container_width=True)
+    with st.form("sweep_controls"):
+        sweep_shots = st.number_input(
+            "Sweep shots per distance", min_value=10, max_value=100_000,
+            value=1_000, step=100,
+        )
+        run_sweep = st.form_submit_button("▶ Play: compare d=3, 5, 7", use_container_width=True)
 
 if run:
     with st.spinner("Running Stim and MWPM..."):
@@ -119,6 +144,16 @@ if run:
     st.session_state["last_result"] = result
     history = st.session_state.setdefault("history", [])
     history.append(result)
+
+if run_sweep:
+    with st.spinner("Running d=3, 5, and 7..."):
+        sweep = run_distance_sweep(
+            shots=int(sweep_shots),
+            gate_rate=gate_rate,
+            measurement_rate=measurement_rate,
+            reset_rate=reset_rate,
+        )
+    st.session_state["sweep_results"] = sweep
 
 result = st.session_state.get("last_result")
 if result:
@@ -153,6 +188,15 @@ if result:
     st.line_chart(history.set_index(history.index)[["logical_error_rate", "detector_event_rate"]])
 else:
     st.info("Choose the noise rates and press **Run simulation**.")
+
+sweep_results = st.session_state.get("sweep_results")
+if sweep_results:
+    st.divider()
+    st.subheader("Distance comparison")
+    st.caption("Each distance uses the same selected noise rates and rounds equal to its distance.")
+    sweep_frame = pd.DataFrame(sweep_results).set_index("distance")
+    st.line_chart(sweep_frame[["logical_error_rate", "detector_event_rate"]])
+    st.dataframe(sweep_frame, use_container_width=True)
 
 st.divider()
 st.header("Literature reference")
