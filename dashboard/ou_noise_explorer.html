@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OU correlated-noise explorer</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1722; --panel:#162938; --text:#edf5fa; --muted:#a9bdc9; --accent:#5cc6c4; --line:#355466; }
+    * { box-sizing:border-box; } body { margin:0; font:16px system-ui,sans-serif; background:var(--bg); color:var(--text); }
+    main { max-width:1200px; margin:auto; padding:28px; } h1 { margin:0 0 6px; } h2 { margin:0 0 12px; font-size:20px; } p { color:var(--muted); }
+    .layout { display:grid; grid-template-columns:300px 1fr; gap:18px; } .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+    label { display:block; margin:15px 0 6px; color:var(--muted); } input { width:100%; } input[type=number] { padding:9px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--text); font-size:16px; }
+    .value { float:right; color:var(--accent); } button { width:100%; padding:11px; margin-top:18px; border:0; border-radius:7px; background:var(--accent); color:#092029; font-weight:700; font-size:16px; cursor:pointer; }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; } .metric { padding:14px; background:#1d3544; border-left:4px solid var(--accent); } .metric small { display:block; color:var(--muted); } .metric strong { font-size:24px; }
+    canvas { width:100%; height:250px; background:#10232f; border-radius:8px; } .chart { margin-bottom:18px; } .note { border-left:4px solid #e7b84d; padding:10px 14px; background:#1d3544; color:var(--muted); }
+    code { color:var(--accent); } @media(max-width:800px) { .layout { grid-template-columns:1fr; } .metrics { grid-template-columns:1fr; } main { padding:16px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>OU correlated-noise explorer</h1>
+  <p>Change one parameter and see how it changes the noise memory, error probability, and decoder memory coverage.</p>
+  <div class="layout">
+    <section class="panel">
+      <h2>Model controls</h2>
+      <label>Displayed QEC rounds <span class="value" id="roundsValue"></span></label><input id="rounds" type="range" min="20" max="500" value="120" step="10">
+      <label>Round duration Δt <span class="value" id="dtValue"></span></label><input id="dt" type="number" min="0.01" max="10" value="1" step="0.1">
+      <label>Correlation time τc <span class="value" id="tauValue"></span></label><input id="tau" type="range" min="0.1" max="100" value="10" step="0.1">
+      <label>Mean OU level μ <span class="value" id="muValue"></span></label><input id="mu" type="range" min="-6" max="6" value="-4" step="0.1">
+      <label>Fluctuation strength σ <span class="value" id="sigmaValue"></span></label><input id="sigma" type="range" min="0" max="3" value="0.8" step="0.05">
+      <label>Maximum error probability pmax <span class="value" id="pmaxValue"></span></label><input id="pmax" type="range" min="0.001" max="0.2" value="0.02" step="0.001">
+      <label>Decoder memory T (rounds) <span class="value" id="decoderValue"></span></label><input id="decoder" type="range" min="1" max="100" value="10" step="1">
+      <label>Random seed</label><input id="seed" type="number" min="0" max="999999" value="7" step="1">
+      <button id="update">Update explorer</button>
+    </section>
+    <section>
+      <div class="metrics"><div class="metric"><small>Correlation length</small><strong id="metricRounds"></strong></div><div class="metric"><small>Memory captured by T</small><strong id="metricCapture"></strong></div><div class="metric"><small>Mean displayed p</small><strong id="metricP"></strong></div></div>
+      <div class="panel chart"><h2>OU level and error probability</h2><canvas id="trace" aria-label="OU level and error probability plot"></canvas><p>The OU level changes gradually; the sigmoid maps it to a probability.</p></div>
+      <div class="panel chart"><h2>Random error events</h2><canvas id="events" aria-label="Random error events by round"></canvas><p>An event is sampled with Bernoulli probability p for each round.</p></div>
+      <div class="panel chart"><h2>Measured versus target autocorrelation</h2><canvas id="corr" aria-label="Measured and target autocorrelation plot"></canvas><p>One finite trace is noisy; the measured curve should follow the exponential target.</p></div>
+      <div class="panel chart"><h2>Decoder memory coverage</h2><canvas id="memory" aria-label="Decoder memory coverage plot"></canvas><p id="memoryText"></p></div>
+      <div class="note" id="explanation" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+function normal(rng) { let u=0,v=0; while(!u)u=rng(); while(!v)v=rng(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function rng(seed) { let s=(seed>>>0)||1; return () => { s=(1664525*s+1013904223)>>>0; return s/4294967296; }; }
+function autocorr(a, maxLag) { const mean=a.reduce((x,y)=>x+y,0)/a.length, c=a.map(v=>v-mean), den=c.reduce((x,y)=>x+y*y,0); return Array.from({length:maxLag+1},(_,lag)=>c.slice(0,a.length-lag).reduce((x,y,i)=>x+y*c[i+lag],0)/den); }
+function draw(id, series, yMin, yMax) { const c=$(id), dpr=devicePixelRatio||1, w=c.clientWidth, h=250; c.width=w*dpr;c.height=h*dpr; const x=c.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,w,h);x.strokeStyle='#355466';x.lineWidth=1;x.beginPath();x.moveTo(42,12);x.lineTo(42,h-28);x.lineTo(w-12,h-28);x.stroke(); const n=series[0].data.length, px=i=>42+(w-54)*i/Math.max(1,n-1), py=v=>h-28-(h-40)*(v-yMin)/(yMax-yMin); series.forEach(s=>{x.strokeStyle=s.color;x.lineWidth=2;x.beginPath();s.data.forEach((v,i)=>i?x.lineTo(px(i),py(v)):x.moveTo(px(i),py(v)));x.stroke();});x.fillStyle='#a9bdc9';x.font='12px system-ui';x.fillText(String(yMax.toPrecision(3)),5,18);x.fillText(String(yMin.toPrecision(3)),5,h-30);x.fillText('round / lag',w-72,h-8); series.forEach((s,i)=>{x.fillStyle=s.color;x.fillRect(58+i*170,8,12,12);x.fillStyle='#edf5fa';x.fillText(s.name,76+i*170,18);}); }
+function update() { const rounds=+$('rounds').value,dt=+$('dt').value,tau=+$('tau').value,mu=+$('mu').value,sigma=+$('sigma').value,pmax=+$('pmax').value,T=+$('decoder').value; const r=rng(+$('seed').value),x=[mu],p=[],e=[];for(let i=1;i<rounds;i++)x.push(x[i-1]+dt/tau*(mu-x[i-1])+sigma*Math.sqrt(dt)*normal(r));x.forEach(v=>{const q=pmax/(1+Math.exp(-Math.max(-60,Math.min(60,v))));p.push(q);e.push(r()<q?1:0);}); const capture=1-Math.exp(-T*dt/tau),corr=autocorr(x,Math.min(50,rounds-1)),target=corr.map((_,i)=>Math.exp(-i*dt/tau)); $('roundsValue').textContent=rounds;$('dtValue').textContent=dt;$('tauValue').textContent=tau;$('muValue').textContent=mu;$('sigmaValue').textContent=sigma;$('pmaxValue').textContent=(pmax*100).toFixed(1)+'%';$('decoderValue').textContent=T;$('metricRounds').textContent=(tau/dt).toFixed(2)+' rounds';$('metricCapture').textContent=(capture*100).toFixed(1)+'%';$('metricP').textContent=(p.reduce((a,b)=>a+b,0)/p.length*100).toFixed(3)+'%'; const lo=Math.min(...x,...p),hi=Math.max(...x,...p);draw('trace',[{name:'OU level x',data:x,color:'#5cc6c4'},{name:'Error probability p',data:p,color:'#e7b84d'}],lo,hi);draw('events',[{name:'Error event',data:e,color:'#e77979'}],0,1);draw('corr',[{name:'Measured',data:corr,color:'#5cc6c4'},{name:'Target',data:target,color:'#e7b84d'}],-1,1);const m=Array.from({length:100},(_,i)=>1-Math.exp(-(i+1)*dt/tau));draw('memory',[{name:'Captured F(T)',data:m,color:'#5cc6c4'}],0,1);$('memoryText').textContent=`At T=${T} rounds, the model captures ${(capture*100).toFixed(1)}% of the ideal exponential memory. This is not a logical-error rate.`;$('explanation').textContent=`The noise remembers approximately ${(tau/dt).toFixed(1)} rounds. The displayed trace contains ${e.reduce((a,b)=>a+b,0)} sampled error events. Increasing τc makes the probability change more slowly; increasing σ makes its fluctuations larger.`; }
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',update));$('update').addEventListener('click',update);window.addEventListener('resize',update);update();
+</script>
+</body>
+</html>
