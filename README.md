@@ -167,7 +167,8 @@ surface_code.py ----> iid_noise.py
 | `experiments/compare_literature_timescales.py` | Demonstrates why IID noise cannot reproduce physical memory times. |
 | `experiments/willow_reference_check.py` | Prints Willow reference timescales and samples persistent leakage states. |
 | `src/noise/willow_model.py` | Stores source-backed Willow reference parameters and timescale formulas. |
-| `docs/noise_literature_database.md` | Literature database with mechanisms, timescales, and citations. |
+| `docs/noise_literature_database.md` | Editable literature database with mechanisms, timescales, and citations. |
+| `output/pdf/noise_literature_database.pdf` | Readable PDF version of the complete literature database. |
 | `tests/test_mwpm_setup.py` | Verifies that the surface-code circuit creates an MWPM decoder. |
 | `tests/test_iid_baseline.py` | Checks validation, zero-noise behavior, and sweep output. |
 | `requirements.txt` | Lists all Python libraries required to run the project. |
