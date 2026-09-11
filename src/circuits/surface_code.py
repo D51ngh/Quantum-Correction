@@ -1,9 +1,15 @@
 import stim
 
-from src.noise.iid_noise import get_iid_noise
+from src.noise.iid_noise import get_iid_noise, get_iid_noise_rates
 
 
-def create_surface_code(distance: int, rounds: int, error_rate: float = 0.0, noise_components=None):
+def create_surface_code(
+    distance: int,
+    rounds: int,
+    error_rate: float = 0.0,
+    noise_components=None,
+    noise_rates=None,
+):
     """
     Create a rotated surface-code memory circuit using Stim.
     """
@@ -13,7 +19,15 @@ def create_surface_code(distance: int, rounds: int, error_rate: float = 0.0, noi
     if rounds < 1:
         raise ValueError("rounds must be a positive integer")
 
-    noise = get_iid_noise(error_rate, components=noise_components)
+    if noise_rates is None:
+        noise = get_iid_noise(error_rate, components=noise_components)
+    else:
+        noise = get_iid_noise_rates(
+            gate_error_rate=noise_rates.get("gate", error_rate),
+            measurement_error_rate=noise_rates.get("measurement", error_rate),
+            reset_error_rate=noise_rates.get("reset", error_rate),
+            components=noise_components,
+        )
 
     circuit = stim.Circuit.generated(
         "surface_code:rotated_memory_z",
