@@ -196,6 +196,7 @@ surface_code.py ----> iid_noise.py
 | `experiments/willow_reference_check.py` | Prints Willow reference timescales and samples persistent leakage states. |
 | `src/noise/willow_model.py` | Stores source-backed Willow reference parameters and timescale formulas. |
 | `docs/noise_literature_database.md` | Editable literature database with mechanisms, timescales, and citations. |
+| `docs/testing_criteria.md` | Repeatable checks for circuit, decoder, experiments, dashboard, and outputs. |
 | `output/pdf/noise_literature_database.pdf` | Readable PDF version of the complete literature database. |
 | `docs/QEC_Guide.pdf` | Supplemental seven-page QEC guide. |
 | `tests/test_mwpm_setup.py` | Verifies that the surface-code circuit creates an MWPM decoder. |
