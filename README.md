@@ -77,6 +77,11 @@ loads the documented mechanism records. Willow timescales and mechanisms that
 are not yet implemented as Stim channels are shown as references, not silently
 treated as simulated hardware noise.
 
+For a browser-only front-end preview, open `dashboard/noise_dashboard.html`
+directly. It provides interactive controls and an event-pressure preview, but
+it does not execute Stim or MWPM; use the Streamlit dashboard for real decoded
+logical-error results.
+
 Run the complete IID experiment:
 
 ```bash
